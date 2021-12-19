@@ -11,5 +11,6 @@ test:
 - request without authorization - get 401 Not authorized
 - request creation of a new item with correct parameters - get 200, check images are uploaded, check polygons are created
 - request creation of a new item with wrong parameters - get 400 for each wrong parameter
-
+- request POST a new Item, PUT with updates, DELETE the Item
+- request POST a new Item, POST the same message - get 401 about duplicated name
 """

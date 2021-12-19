@@ -1,6 +1,9 @@
 import json
 
+from django.contrib.gis.gdal import GDALException
+from django.contrib.gis.geos import GEOSGeometry
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import IntegrityError
 from django.forms.models import model_to_dict
 from django.shortcuts import HttpResponse
 from rest_framework import status
@@ -21,7 +24,7 @@ def serialize_item(item):
     return serialized
 
 
-@api_view(['GET', ])
+@api_view(['GET', 'POST', ])
 def items(request):
     """
     Get all items available for the user
@@ -51,7 +54,7 @@ def items(request):
     return HttpResponse(json.dumps({"detail": "Wrong method"}), status=status.HTTP_501_NOT_IMPLEMENTED)
 
 
-@api_view(['GET', 'PUT', 'DELETE'])
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
 def item(request, item_id):
     if request.user.is_anonymous:
         return HttpResponse(json.dumps({"detail": "Not authorized"}), status=status.HTTP_401_UNAUTHORIZED)
@@ -75,18 +78,51 @@ def item(request, item_id):
 
 
 def save_item(request, item, success_status):
+    """Validate request and save item"""
     errors = []
+    client = request.data.get("client", "")
+    if client == "":
+        errors.append({"client": "This field is required"})
+
+    try:
+        client = Client.objects.get(name=client, clientuser__user=request.user)
+    except Client.DoesNotExist:
+        errors.append({"client": "Client not found or user doesn't have access to this manage this client"})
+
     name = request.data.get("name", "")
     if name == "":
         errors.append({"name": "This field is required"})
 
+    image = request.FILES.get("image", None)
+    if image is None:
+        errors.append({"image": "This field is required"})
+
+    areas = request.data.get("areas", "")
+    if name == "":
+        errors.append({"areas": "This field is required"})
     try:
+        areas = GEOSGeometry(areas)
+        if areas.geom_type != 'MultiPolygon':
+            raise GDALException(f'Expected MultiPolygon, got {areas.geom_type}')
+    except GDALException as e:
+        errors.append({"areas": "Incorrect format of the field. Expected MultiPolygon in GeoJSON format."})
+
+    if errors:
+        return HttpResponse(json.dumps({"errors": errors}), status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        item.client = client
         item.name = name
+        item.image = image
+        item.areas = areas
         item.save()
-    except Exception as e:
+    except IntegrityError as e:
         return HttpResponse(json.dumps(
-            {
-                "errors": {"Item": str(e)}
-            }), status=status.HTTP_400_BAD_REQUEST)
+            {"errors": [{"Item": str(e).strip().split("\n")[-1]}, ]}
+        ), status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return HttpResponse(json.dumps({
+            "errors": [{"Item": str(e)}, ]
+        }), status=status.HTTP_400_BAD_REQUEST)
 
     return HttpResponse(json.dumps({"data": serialize_item(item)}), status=success_status)

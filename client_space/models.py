@@ -44,10 +44,15 @@ class Item(models.Model):
     image = models.ImageField(verbose_name='Image', upload_to=client_directory_path)
     areas = geomodel.MultiPolygonField(verbose_name='Areas to show')
 
+    class Meta:
+        unique_together = [['client', 'name'], ]
+        index_together = [['client', 'name'], ]
+
     def __str__(self):
         return self.name
 
-    def total_area(self):
+    def total_area(self) -> str:
+        """Calculates total area of all polygons for the item"""
         area = self.areas.transform(
             ct=get_srid(
                 lon=(self.areas.extent[0] + self.areas.extent[2]) / 2,
@@ -62,7 +67,7 @@ def post_save_image(sender, instance, *args, **kwargs):
     """ Clean Old Image file """
     try:
         instance.image.delete(save=False)
-    except:
+    except Exception:
         pass
 
 
@@ -73,11 +78,11 @@ def pre_save_image(sender, instance, *args, **kwargs):
         old_img = instance.__class__.objects.get(id=instance.id).image.path
         try:
             new_img = instance.image.path
-        except:
+        except Exception:
             new_img = None
         if new_img != old_img:
             import os
             if os.path.exists(old_img):
                 os.remove(old_img)
-    except:
+    except Exception:
         pass

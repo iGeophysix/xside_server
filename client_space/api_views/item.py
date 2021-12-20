@@ -6,6 +6,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.forms.models import model_to_dict
 from django.shortcuts import HttpResponse
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
 from rest_framework import status
 from rest_framework.decorators import api_view
 
@@ -24,12 +26,139 @@ def serialize_item(item):
     return serialized
 
 
+@extend_schema(
+    description='Get all available items',
+    parameters=[],
+    methods=["GET", ],
+    responses={
+        (200, 'application/json'): OpenApiTypes.OBJECT
+    },
+    examples=[
+        OpenApiExample(
+            'Example',
+            value={
+                "count": 2,
+                "data":
+                    [{"id": 1,
+                      "client": "Client1",
+                      "name": "Item1",
+                      "image": "/path/to/image1.jpg",
+                      "areas": {
+                          "type": "MultiPolygon",
+                          "coordinates": [[[[37.60200012009591, 55.753318768941305],
+                                            [37.60157692828216, 55.750842010116045],
+                                            [37.60936881881207, 55.74906941558997],
+                                            [37.613412427017465, 55.75213456321547],
+                                            [37.607292663306005, 55.75327778725062],
+                                            [37.60314446990378, 55.75346674901331],
+                                            [37.60200012009591, 55.753318768941305]]]]
+                      }
+                      },
+                     {"id": 2, "client": "Clien2",
+                      "name": "Item2",
+                      "image": "/path/to/image2.jpg",
+                      "areas": {
+                          "type": "MultiPolygon",
+                          "coordinates": [
+                              [[[37.60200012009591, 55.753318768941305],
+                                [37.60157692828216, 55.750842010116045],
+                                [37.60936881881207, 55.74906941558997],
+                                [37.613412427017465, 55.75213456321547],
+                                [37.607292663306005, 55.75327778725062],
+                                [37.60314446990378, 55.75346674901331],
+                                [37.60200012009591, 55.753318768941305]]]]
+                      }},
+                     ]
+            }
+        ),
+
+    ],
+)
+@extend_schema(
+    description='Add new item',
+    parameters=[
+        OpenApiParameter("name", OpenApiTypes.STR, description="Item Name"),
+        OpenApiParameter("client", OpenApiTypes.STR, description="Client Name", examples=[
+            OpenApiExample('Client1', value='Client1'), OpenApiExample('Client2', value='Client2')
+        ]),
+        OpenApiParameter("image", OpenApiTypes.BINARY, description="Image to show"),
+        OpenApiParameter("areas", OpenApiTypes.OBJECT, description="Areas to show item in", examples=[OpenApiExample('Sample Polygon', value={
+            "type": "MultiPolygon",
+            "coordinates": [[[[37.60200012009591, 55.753318768941305],
+                              [37.60157692828216, 55.750842010116045],
+                              [37.60936881881207, 55.74906941558997],
+                              [37.613412427017465, 55.75213456321547],
+                              [37.607292663306005, 55.75327778725062],
+                              [37.60314446990378, 55.75346674901331],
+                              [37.60200012009591, 55.753318768941305]]]]
+        })]),
+    ],
+    methods=["POST", ],
+    responses={
+        (200, 'application/json'): OpenApiTypes.OBJECT
+    },
+    examples=[
+        OpenApiExample(
+            'Example',
+            value={"id": 1,
+                   "client": "Client1",
+                   "name": "Item1",
+                   "image": "/path/to/image1.jpg",
+                   "areas": {
+                       "type": "MultiPolygon",
+                       "coordinates": [[[[37.60200012009591, 55.753318768941305],
+                                         [37.60157692828216, 55.750842010116045],
+                                         [37.60936881881207, 55.74906941558997],
+                                         [37.613412427017465, 55.75213456321547],
+                                         [37.607292663306005, 55.75327778725062],
+                                         [37.60314446990378, 55.75346674901331],
+                                         [37.60200012009591, 55.753318768941305]]]]
+                   }
+                   },
+
+        ),
+
+    ],
+)
 @api_view(['GET', 'POST', ])
 def items(request):
     """
     Get all items available for the user
-    :param request:
-    :return:
+
+    :return: {
+            "count": 2,
+            "data":
+                [{"id": 1,
+                  "client": "Client1",
+                  "name": "Item1",
+                  "image": "/path/to/image1.jpg",
+                  "areas": {
+                      "type": "MultiPolygon",
+                      "coordinates": [[[[37.60200012009591, 55.753318768941305],
+                                        [37.60157692828216, 55.750842010116045],
+                                        [37.60936881881207, 55.74906941558997],
+                                        [37.613412427017465, 55.75213456321547],
+                                        [37.607292663306005, 55.75327778725062],
+                                        [37.60314446990378, 55.75346674901331],
+                                        [37.60200012009591, 55.753318768941305]]]]
+                  }
+                  },
+                 {"id": 2, "client": "Clien2",
+                  "name": "Item2",
+                  "image": "/path/to/image2.jpg",
+                  "areas": {
+                      "type": "MultiPolygon",
+                      "coordinates": [
+                          [[[37.60200012009591, 55.753318768941305],
+                            [37.60157692828216, 55.750842010116045],
+                            [37.60936881881207, 55.74906941558997],
+                            [37.613412427017465, 55.75213456321547],
+                            [37.607292663306005, 55.75327778725062],
+                            [37.60314446990378, 55.75346674901331],
+                            [37.60200012009591, 55.753318768941305]]]]
+                  }},
+                 ]
+        }
     """
     if request.user.is_anonymous:
         return HttpResponse(json.dumps({"detail": "Not authorized"}), status=status.HTTP_401_UNAUTHORIZED)
@@ -54,8 +183,86 @@ def items(request):
     return HttpResponse(json.dumps({"detail": "Wrong method"}), status=status.HTTP_501_NOT_IMPLEMENTED)
 
 
-@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@extend_schema(
+    description='Get item by id',
+    parameters=[],
+    methods=["GET", ],
+    responses={
+        (200, 'application/json'): OpenApiTypes.OBJECT
+    },
+    examples=[
+        OpenApiExample(
+            'Example',
+            value={"data": {"id": 2, "client": "Client1", "name": "Item1", "image": "/path/to/image.jpg", "areas": {"type": "MultiPolygon", "coordinates": [[[[37.61239186220337, 55.74924941686192], [37.6135271176463, 55.74809512697013], [37.6179613173008, 55.74903191006068], [37.62117562131606, 55.74950250520632], [37.62338881439064, 55.749681718735665], [37.621766931843005, 55.75263915304319], [37.61650690517854, 55.75520844509501], [37.61239186220337, 55.74924941686192]]]]}}},
+        ),
+    ],
+)
+@extend_schema(
+    description='Update item by id',
+    parameters=[
+        OpenApiParameter("name", OpenApiTypes.STR, description="Item Name"),
+        OpenApiParameter("client", OpenApiTypes.STR, description="Client Name", examples=[
+            OpenApiExample('Client1', value='Client1'), OpenApiExample('Client2', value='Client2')
+        ]),
+        OpenApiParameter("image", OpenApiTypes.BINARY, description="Image to show"),
+        OpenApiParameter("areas", OpenApiTypes.OBJECT, description="Areas to show item in", examples=[OpenApiExample('Sample Polygon', value={
+            "type": "MultiPolygon",
+            "coordinates": [[[[37.60200012009591, 55.753318768941305],
+                              [37.60157692828216, 55.750842010116045],
+                              [37.60936881881207, 55.74906941558997],
+                              [37.613412427017465, 55.75213456321547],
+                              [37.607292663306005, 55.75327778725062],
+                              [37.60314446990378, 55.75346674901331],
+                              [37.60200012009591, 55.753318768941305]]]]
+        })]),
+    ],
+    methods=["PUT", ],
+    responses={
+        (200, 'application/json'): OpenApiTypes.OBJECT
+    },
+    examples=[
+        OpenApiExample(
+            'Example',
+            value={"id": 1,
+                   "client": "Client1",
+                   "name": "Item1",
+                   "image": "/path/to/image1.jpg",
+                   "areas": {
+                       "type": "MultiPolygon",
+                       "coordinates": [[[[37.60200012009591, 55.753318768941305],
+                                         [37.60157692828216, 55.750842010116045],
+                                         [37.60936881881207, 55.74906941558997],
+                                         [37.613412427017465, 55.75213456321547],
+                                         [37.607292663306005, 55.75327778725062],
+                                         [37.60314446990378, 55.75346674901331],
+                                         [37.60200012009591, 55.753318768941305]]]]
+                   }
+                   },
+        ),
+    ],
+)
+@extend_schema(
+    description='Delete item by id',
+    parameters=[],
+    methods=["DELETE", ],
+    responses={
+        (200, 'application/json'): OpenApiTypes.OBJECT
+    },
+    examples=[
+        OpenApiExample(
+            'Example',
+            value={"detail": "deleted"}
+        ),
+    ],
+)
+@api_view(['GET', 'PUT', 'DELETE'])
 def item(request, item_id):
+    """
+    CRUD operations with Items
+    :param request:
+    :param item_id:
+    :return:
+    """
     if request.user.is_anonymous:
         return HttpResponse(json.dumps({"detail": "Not authorized"}), status=status.HTTP_401_UNAUTHORIZED)
 

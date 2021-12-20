@@ -140,9 +140,14 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'AUTHENTICATION_WHITELIST': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
+        # 'rest_framework.authentication.BasicAuthentication',
     ],
-
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "persistAuthorization": True,
+        "displayOperationId": True,
+    },
+    'COMPONENT_SPLIT_REQUEST': True
     # OTHER SETTINGS
 }
 

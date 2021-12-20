@@ -26,6 +26,9 @@ class Client(models.Model):
 
 
 class ClientUser(models.Model):
+    """
+    Model to grant access to specified Clients to a User
+    """
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     client = models.ManyToManyField(Client)
 
@@ -33,7 +36,13 @@ class ClientUser(models.Model):
         return self.user.get_full_name()
 
 
-def client_directory_path(instance, filename):
+def client_directory_path(instance, filename) -> str:
+    """
+    Create path to store an image file for Item models
+    :param instance: Item instance
+    :param filename:
+    :return: path to store the image
+    """
     return os.path.join('images', str(instance.client.name), str(instance.name), filename)
 
 
@@ -84,5 +93,7 @@ def pre_save_image(sender, instance, *args, **kwargs):
             import os
             if os.path.exists(old_img):
                 os.remove(old_img)
+            if len(os.listdir(os.path.dirname(old_img))) == 0:
+                os.removedirs(os.path.dirname(old_img))
     except Exception:
         pass

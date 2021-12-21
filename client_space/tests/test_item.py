@@ -13,4 +13,5 @@ test:
 - request creation of a new item with wrong parameters - get 400 for each wrong parameter
 - request POST a new Item, PUT with updates, DELETE the Item
 - request POST a new Item, POST the same message - get 401 about duplicated name
+- write tests for each validation in item.save_item
 """

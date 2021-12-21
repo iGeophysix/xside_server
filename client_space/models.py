@@ -52,6 +52,9 @@ class Item(models.Model):
     name = models.CharField(max_length=200, unique=True)
     image = models.ImageField(verbose_name='Image', upload_to=client_directory_path)
     areas = geomodel.MultiPolygonField(verbose_name='Areas to show')
+    is_active = models.BooleanField(verbose_name='Item is active', default=False)
+    max_rate = models.DecimalField(verbose_name='Maximum Show Rate', max_digits=8, decimal_places=2, default=10)
+    max_daily_spend = models.DecimalField(verbose_name='Maximum Daily Spends', max_digits=11, decimal_places=2, default=100)
 
     class Meta:
         unique_together = [['client', 'name'], ]

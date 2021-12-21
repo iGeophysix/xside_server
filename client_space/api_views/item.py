@@ -1,3 +1,4 @@
+import decimal
 import json
 
 from django.contrib.gis.gdal import GDALException
@@ -14,6 +15,10 @@ from rest_framework.decorators import api_view
 from client_space.models import Item, Client
 
 
+class ParsingError(Exception):
+    pass
+
+
 def serialize_item(item):
     serialized = model_to_dict(item)
     out = {
@@ -21,6 +26,8 @@ def serialize_item(item):
         "client": item.client.name,
         "image": item.image.url,
         "areas": json.loads(item.areas.geojson),
+        "max_rate": float(item.max_rate),
+        "max_daily_spend": float(item.max_daily_spend)
     }
     serialized.update(out)
     return serialized
@@ -39,36 +46,44 @@ def serialize_item(item):
             value={
                 "count": 2,
                 "data":
-                    [{"id": 1,
-                      "client": "Client1",
-                      "name": "Item1",
-                      "image": "/path/to/image1.jpg",
-                      "areas": {
-                          "type": "MultiPolygon",
-                          "coordinates": [[[[37.60200012009591, 55.753318768941305],
-                                            [37.60157692828216, 55.750842010116045],
-                                            [37.60936881881207, 55.74906941558997],
-                                            [37.613412427017465, 55.75213456321547],
-                                            [37.607292663306005, 55.75327778725062],
-                                            [37.60314446990378, 55.75346674901331],
-                                            [37.60200012009591, 55.753318768941305]]]]
-                      }
-                      },
-                     {"id": 2, "client": "Clien2",
-                      "name": "Item2",
-                      "image": "/path/to/image2.jpg",
-                      "areas": {
-                          "type": "MultiPolygon",
-                          "coordinates": [
-                              [[[37.60200012009591, 55.753318768941305],
-                                [37.60157692828216, 55.750842010116045],
-                                [37.60936881881207, 55.74906941558997],
-                                [37.613412427017465, 55.75213456321547],
-                                [37.607292663306005, 55.75327778725062],
-                                [37.60314446990378, 55.75346674901331],
-                                [37.60200012009591, 55.753318768941305]]]]
-                      }},
-                     ]
+                    [
+                        {"id": 1,
+                         "client": "Client1",
+                         "name": "Item1",
+                         "image": "/path/to/image1.jpg",
+                         "areas": {
+                             "type": "MultiPolygon",
+                             "coordinates": [[[[37.60200012009591, 55.753318768941305],
+                                               [37.60157692828216, 55.750842010116045],
+                                               [37.60936881881207, 55.74906941558997],
+                                               [37.613412427017465, 55.75213456321547],
+                                               [37.607292663306005, 55.75327778725062],
+                                               [37.60314446990378, 55.75346674901331],
+                                               [37.60200012009591, 55.753318768941305]]]]
+                         },
+                         "is_active": False,
+                         "max_rate": 10.0,
+                         "max_daily_spend": 100.0
+                         },
+                        {"id": 2, "client": "Clien2",
+                         "name": "Item2",
+                         "image": "/path/to/image2.jpg",
+                         "areas": {
+                             "type": "MultiPolygon",
+                             "coordinates": [
+                                 [[[37.60200012009591, 55.753318768941305],
+                                   [37.60157692828216, 55.750842010116045],
+                                   [37.60936881881207, 55.74906941558997],
+                                   [37.613412427017465, 55.75213456321547],
+                                   [37.607292663306005, 55.75327778725062],
+                                   [37.60314446990378, 55.75346674901331],
+                                   [37.60200012009591, 55.753318768941305]]]]
+
+                         }, "is_active": False,
+                         "max_rate": 10.0,
+                         "max_daily_spend": 100.0
+                         },
+                    ]
             }
         ),
 
@@ -92,6 +107,9 @@ def serialize_item(item):
                               [37.60314446990378, 55.75346674901331],
                               [37.60200012009591, 55.753318768941305]]]]
         })]),
+        OpenApiParameter("is_active", OpenApiTypes.BOOL, description="Item is active?"),
+        OpenApiParameter("max_rate", OpenApiTypes.DECIMAL, description="Max Rate for show"),
+        OpenApiParameter("max_daily_spend", OpenApiTypes.DECIMAL, description="Max daily spend"),
     ],
     methods=["POST", ],
     responses={
@@ -113,11 +131,13 @@ def serialize_item(item):
                                          [37.607292663306005, 55.75327778725062],
                                          [37.60314446990378, 55.75346674901331],
                                          [37.60200012009591, 55.753318768941305]]]]
-                   }
+                   },
+                   "is_active": False,
+                   "max_rate": 10.0,
+                   "max_daily_spend": 100.0
                    },
 
         ),
-
     ],
 )
 @api_view(['GET', 'POST', ])
@@ -193,7 +213,26 @@ def items(request):
     examples=[
         OpenApiExample(
             'Example',
-            value={"data": {"id": 2, "client": "Client1", "name": "Item1", "image": "/path/to/image.jpg", "areas": {"type": "MultiPolygon", "coordinates": [[[[37.61239186220337, 55.74924941686192], [37.6135271176463, 55.74809512697013], [37.6179613173008, 55.74903191006068], [37.62117562131606, 55.74950250520632], [37.62338881439064, 55.749681718735665], [37.621766931843005, 55.75263915304319], [37.61650690517854, 55.75520844509501], [37.61239186220337, 55.74924941686192]]]]}}},
+            value={"data":
+                       {"id": 1,
+                        "client": "Client1",
+                        "name": "Item1",
+                        "image": "/path/to/image1.jpg",
+                        "areas": {
+                            "type": "MultiPolygon",
+                            "coordinates": [[[[37.60200012009591, 55.753318768941305],
+                                              [37.60157692828216, 55.750842010116045],
+                                              [37.60936881881207, 55.74906941558997],
+                                              [37.613412427017465, 55.75213456321547],
+                                              [37.607292663306005, 55.75327778725062],
+                                              [37.60314446990378, 55.75346674901331],
+                                              [37.60200012009591, 55.753318768941305]]]]
+                        },
+                        "is_active": False,
+                        "max_rate": 10.0,
+                        "max_daily_spend": 100.0
+                        },
+                   }
         ),
     ],
 )
@@ -314,6 +353,27 @@ def save_item(request, item, success_status):
     except GDALException as e:
         errors.append({"areas": "Incorrect format of the field. Expected MultiPolygon in GeoJSON format."})
 
+    is_active = str(request.data.get("is_active", Item._meta.get_field('is_active').get_default()))
+    try:
+        if is_active.lower() in ('true', 'false'):
+            is_active = is_active.lower() == 'true'
+        else:
+            raise ParsingError('Cannot parse is_active field')
+    except ParsingError as e:
+        errors.append({'is_active': 'Cannot parse is_active. Expected value: true or false'})
+
+    max_rate = request.data.get("max_rate", Item._meta.get_field('max_rate').get_default())
+    try:
+        max_rate = round(decimal.Decimal(max_rate), Item._meta.get_field('max_daily_spend').decimal_places)
+    except Exception as e:
+        errors.append({'max_rate': 'Cannot parse max_rate. Expected decimal number'})
+
+    max_daily_spend = request.data.get("max_daily_spend", Item._meta.get_field('max_daily_spend').get_default())
+    try:
+        max_daily_spend = round(decimal.Decimal(max_daily_spend), Item._meta.get_field('max_daily_spend').decimal_places)
+    except Exception as e:
+        errors.append({'max_daily_spend': 'Cannot parse max_daily_spend. Expected decimal number'})
+
     if errors:
         return HttpResponse(json.dumps({"errors": errors}), status=status.HTTP_400_BAD_REQUEST)
 
@@ -322,14 +382,17 @@ def save_item(request, item, success_status):
         item.name = name
         item.image = image
         item.areas = areas
+        item.is_active = is_active
+        item.max_rate = max_rate
+        item.max_daily_spend = max_daily_spend
         item.save()
     except IntegrityError as e:
         return HttpResponse(json.dumps(
-            {"errors": [{"Item": str(e).strip().split("\n")[-1]}, ]}
+            {"errors": [{"Item": str(e).strip().split("\n")[-1]}, ] + errors}
         ), status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return HttpResponse(json.dumps({
-            "errors": [{"Item": str(e)}, ]
+            "errors": [{"Item": str(e)}, ] + errors
         }), status=status.HTTP_400_BAD_REQUEST)
 
     return HttpResponse(json.dumps({"data": serialize_item(item)}), status=success_status)

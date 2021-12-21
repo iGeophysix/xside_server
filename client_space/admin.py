@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.contrib.gis.admin import GISModelAdmin
 
-from .models import Client, Item, ClientUser
+from .models import Client, Item, ClientUser, ItemFile
 
 
 # Register your models here.
@@ -12,6 +12,10 @@ class ClientAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Client, ClientAdmin)
+
+
+class ItemFileInline(admin.TabularInline):
+    model = ItemFile
 
 
 class ItemAdmin(GISModelAdmin):
@@ -26,8 +30,13 @@ class ItemAdmin(GISModelAdmin):
     list_display = ('id', 'client', 'name', 'total_area')
     list_filter = ('client',)
 
+    inlines = [
+        ItemFileInline,
+    ]
+
 
 admin.site.register(Item, ItemAdmin)
+
 
 # Redefine users admin
 class ClientUserInline(admin.StackedInline):

@@ -43,14 +43,14 @@ def client_directory_path(instance, filename) -> str:
     :param filename:
     :return: path to store the image
     """
-    return os.path.join('images', str(instance.client.name), str(instance.name), filename)
+    return os.path.join('images', str(instance.item.client.name), str(instance.item.name), filename)
 
 
 class Item(models.Model):
-    """Item object contains one campaign input information like client, name, image and areas"""
+    """Item object contains one campaign input information like client, name, areas etc."""
     client = models.ForeignKey(Client, on_delete=models.RESTRICT)
     name = models.CharField(max_length=200, unique=True)
-    image = models.ImageField(verbose_name='Image', upload_to=client_directory_path)
+
     areas = geomodel.MultiPolygonField(verbose_name='Areas to show')
     is_active = models.BooleanField(verbose_name='Item is active', default=False)
     max_rate = models.DecimalField(verbose_name='Maximum Show Rate', max_digits=8, decimal_places=2, default=10)
@@ -74,7 +74,15 @@ class Item(models.Model):
         return f'{round(area, 2)} sq km'
 
 
-@receiver(models.signals.post_delete, sender=Item)
+class ItemFile(models.Model):
+    """Item files"""
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='items')
+    image = models.FileField(verbose_name='image', upload_to=client_directory_path, )
+
+    def __str__(self):
+        return self.image.name
+
+@receiver(models.signals.post_delete, sender=ItemFile)
 def post_save_image(sender, instance, *args, **kwargs):
     """ Clean Old Image file """
     try:
@@ -83,7 +91,7 @@ def post_save_image(sender, instance, *args, **kwargs):
         pass
 
 
-@receiver(models.signals.pre_save, sender=Item)
+@receiver(models.signals.pre_save, sender=ItemFile)
 def pre_save_image(sender, instance, *args, **kwargs):
     """ instance old image file will delete from os """
     try:
@@ -100,3 +108,14 @@ def pre_save_image(sender, instance, *args, **kwargs):
                 os.removedirs(os.path.dirname(old_img))
     except Exception:
         pass
+
+@receiver(models.signals.pre_delete, sender=ItemFile)
+def pre_delete_image(sender, instance, *args, **kwargs):
+    """ Clean Old Image file """
+    try:
+        instance.image.delete(save=False)
+        if len(os.listdir(os.path.dirname(instance.__class__.objects.get(id=instance.id).image.path))) == 0:
+            os.removedirs(os.path.dirname(instance.__class__.objects.get(id=instance.id).image.path))
+    except Exception:
+        pass
+

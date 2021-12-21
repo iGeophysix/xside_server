@@ -145,7 +145,6 @@ def serialize_item(item):
                 ]
             }
         ),
-
     ],
 )
 @extend_schema(

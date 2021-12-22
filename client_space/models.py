@@ -82,40 +82,11 @@ class ItemFile(models.Model):
     def __str__(self):
         return self.image.name
 
-@receiver(models.signals.post_delete, sender=ItemFile)
-def post_save_image(sender, instance, *args, **kwargs):
-    """ Clean Old Image file """
-    try:
-        instance.image.delete(save=False)
-    except Exception:
-        pass
-
-
-@receiver(models.signals.pre_save, sender=ItemFile)
-def pre_save_image(sender, instance, *args, **kwargs):
-    """ instance old image file will delete from os """
-    try:
-        old_img = instance.__class__.objects.get(id=instance.id).image.path
-        try:
-            new_img = instance.image.path
-        except Exception:
-            new_img = None
-        if new_img != old_img:
-            import os
-            if os.path.exists(old_img):
-                os.remove(old_img)
-            if len(os.listdir(os.path.dirname(old_img))) == 0:
-                os.removedirs(os.path.dirname(old_img))
-    except Exception:
-        pass
 
 @receiver(models.signals.pre_delete, sender=ItemFile)
 def pre_delete_image(sender, instance, *args, **kwargs):
     """ Clean Old Image file """
     try:
         instance.image.delete(save=False)
-        if len(os.listdir(os.path.dirname(instance.__class__.objects.get(id=instance.id).image.path))) == 0:
-            os.removedirs(os.path.dirname(instance.__class__.objects.get(id=instance.id).image.path))
     except Exception:
         pass
-

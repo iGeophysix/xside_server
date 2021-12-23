@@ -14,6 +14,7 @@ from rest_framework.decorators import api_view
 
 from client_space.models import Item, Client, ItemFile
 
+MAX_PAGE_SIZE = 100
 
 class ParsingError(Exception):
     pass
@@ -35,7 +36,10 @@ def serialize_item(item):
 
 @extend_schema(
     description='Get all available items',
-    parameters=[],
+    parameters=[
+        OpenApiParameter("page_size", OpenApiTypes.INT, description="Page size"),
+        OpenApiParameter("page", OpenApiTypes.INT, description="Page number"),
+    ],
     methods=["GET", ],
     responses={
         (200, 'application/json'): OpenApiTypes.OBJECT
@@ -202,41 +206,7 @@ def serialize_item(item):
 def items(request):
     """
     Get all items available for the user
-
-    :return: {
-            "count": 2,
-            "data":
-                [{"id": 1,
-                  "client": "Client1",
-                  "name": "Item1",
-                  "image": "/path/to/image1.jpg",
-                  "areas": {
-                      "type": "MultiPolygon",
-                      "coordinates": [[[[37.60200012009591, 55.753318768941305],
-                                        [37.60157692828216, 55.750842010116045],
-                                        [37.60936881881207, 55.74906941558997],
-                                        [37.613412427017465, 55.75213456321547],
-                                        [37.607292663306005, 55.75327778725062],
-                                        [37.60314446990378, 55.75346674901331],
-                                        [37.60200012009591, 55.753318768941305]]]]
-                  }
-                  },
-                 {"id": 2, "client": "Clien2",
-                  "name": "Item2",
-                  "image": "/path/to/image2.jpg",
-                  "areas": {
-                      "type": "MultiPolygon",
-                      "coordinates": [
-                          [[[37.60200012009591, 55.753318768941305],
-                            [37.60157692828216, 55.750842010116045],
-                            [37.60936881881207, 55.74906941558997],
-                            [37.613412427017465, 55.75213456321547],
-                            [37.607292663306005, 55.75327778725062],
-                            [37.60314446990378, 55.75346674901331],
-                            [37.60200012009591, 55.753318768941305]]]]
-                  }},
-                 ]
-        }
+    :return:
     """
     if request.user.is_anonymous:
         return JsonResponse({"detail": "Not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -247,8 +217,8 @@ def items(request):
 
         items_count = items_data.count()
 
-        page_size = int(request.GET.get("page_size", "10"))
-        page_no = int(request.GET.get("page_no", "0"))
+        page_size = min(MAX_PAGE_SIZE, int(request.GET.get("page_size", MAX_PAGE_SIZE)))
+        page_no = int(request.GET.get("page", "0"))
         items_data = list(items_data[page_no * page_size:page_no * page_size + page_size])
 
         items_data = [serialize_item(item) for item in items_data]

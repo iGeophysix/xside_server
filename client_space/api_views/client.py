@@ -3,6 +3,8 @@ import json
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms.models import model_to_dict
 from django.shortcuts import HttpResponse
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view
 
@@ -15,6 +17,17 @@ def serialize_client(client):
     return serialized
 
 
+@extend_schema(
+    description='Get all available clients',
+    parameters=[
+        OpenApiParameter("page_size", OpenApiTypes.INT, description="Page size"),
+        OpenApiParameter("page", OpenApiTypes.INT, description="Page number"),
+    ],
+    methods=["GET", ],
+    responses={
+        (200, 'application/json'): OpenApiTypes.OBJECT
+    },
+)
 @api_view(['GET', ])
 def clients(request):
     if request.user.is_anonymous:
@@ -26,19 +39,23 @@ def clients(request):
         clients_count = clients_data.count()
 
         page_size = int(request.GET.get("page_size", "10"))
-        page_no = int(request.GET.get("page_no", "0"))
+        page_no = int(request.GET.get("page", "0"))
         clients_data = list(clients_data[page_no * page_size:page_no * page_size + page_size])
 
         clients_data = [serialize_client(client) for client in clients_data]
         return HttpResponse(json.dumps({"count": clients_count, "data": clients_data}), status=status.HTTP_200_OK)
-    """
-    if request.method == "POST":
-        client = Client()
-        return save_client(request, client, status.HTTP_201_CREATED)
-    """
+
     return HttpResponse(json.dumps({"detail": "Wrong method"}), status=status.HTTP_501_NOT_IMPLEMENTED)
 
 
+@extend_schema(
+    description='Get one client',
+    parameters=[],
+    methods=["GET", ],
+    responses={
+        (200, 'application/json'): OpenApiTypes.OBJECT
+    },
+)
 @api_view(['GET', ])
 def client(request, client_id):
     if request.user.is_anonymous:
@@ -57,32 +74,5 @@ def client(request, client_id):
 
     if request.method == "GET":
         return HttpResponse(json.dumps({"data": serialize_client(client)}), status=status.HTTP_200_OK)
-    """
-    if request.method == "PUT":
-        return save_client(request, client, status.HTTP_200_OK)
 
-    if request.method == "DELETE":
-        client.delete()
-        return HttpResponse(json.dumps({"detail": "deleted"}), status=status.HTTP_410_GONE)
-    """
     return HttpResponse(json.dumps({"detail": "Wrong method"}), status=status.HTTP_501_NOT_IMPLEMENTED)
-
-
-"""
-def save_client(request, client, success_status):
-    errors = []
-    name = request.data.get("name", "")
-    if name == "":
-        errors.append({"name": "This field is required"})
-
-    try:
-        client.name = name
-        client.save()
-    except Exception as e:
-        return HttpResponse(json.dumps(
-            {
-                "errors": {"Client": str(e)}
-            }), status=status.HTTP_400_BAD_REQUEST)
-
-    return HttpResponse(json.dumps({"data": serialize_client(client)}), status=success_status)
-"""

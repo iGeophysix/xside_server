@@ -177,7 +177,6 @@ AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', 'xside')
 AWS_S3_ACCESS_KEY_ID = os.environ.get('AWS_S3_ACCESS_KEY_ID', 'sQu2CtP5NrfZ8QV6_dNv')
 AWS_S3_SECRET_ACCESS_KEY = os.environ.get('AWS_S3_SECRET_ACCESS_KEY')
 
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
@@ -193,3 +192,5 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     FRONTEND_BASE_URL,
 ]
+
+GDAL_LIBRARY_PATH = '/opt/homebrew/Cellar/gdal/3.3.3_1/lib/libgdal.dylib'

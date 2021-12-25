@@ -6,6 +6,8 @@ services:
       dockerfile: db.Dockerfile
     env_file:
       - database.env # configure postgres
+    ports:
+      - 5432:5432
 #    volumes:
 #      - database-data:/Users/igeophysix/Programming/PycharmProjects/xside_server/pgsql/postgres/ # persist data even if container shuts down
 

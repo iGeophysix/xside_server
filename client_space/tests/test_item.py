@@ -6,6 +6,7 @@ SetUp:
 - Create one item and link it to client
 test:
 - request all items - get one created
+- request all items specify pages, page size and fields to show
 - request created item - get 200 and item info
 - request non-existing item - get 404 Not found
 - request without authorization - get 401 Not authorized

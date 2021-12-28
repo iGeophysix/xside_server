@@ -16,11 +16,12 @@ from client_space.models import Item, Client, ItemFile
 
 MAX_PAGE_SIZE = 100
 
+
 class ParsingError(Exception):
     pass
 
 
-def serialize_item(item):
+def serialize_item(item, fields=None):
     serialized = model_to_dict(item)
     out = {
         "name": str(item.name),
@@ -31,12 +32,29 @@ def serialize_item(item):
         "max_daily_spend": float(item.max_daily_spend)
     }
     serialized.update(out)
+    if fields:
+        serialized = {field: serialized.get(field, None) for field in fields}
     return serialized
 
 
 @extend_schema(
     description='Get all available items',
     parameters=[
+        OpenApiParameter("fields", OpenApiTypes.OBJECT, description="list of fields",
+                         examples=[
+                             OpenApiExample(
+                                 'All fields',
+                                 value=None
+                             ),
+                             OpenApiExample(
+                                 'Only ID',
+                                 value=['id']
+                             ),
+                             OpenApiExample(
+                                 'Only ID and name',
+                                 value=["id", "name"]
+                             ),
+                         ]),
         OpenApiParameter("page_size", OpenApiTypes.INT, description="Page size"),
         OpenApiParameter("page", OpenApiTypes.INT, description="Page number"),
     ],
@@ -202,7 +220,7 @@ def serialize_item(item):
         ),
     ],
 )
-@api_view(['GET', 'POST', ])
+@api_view(['GET', 'HEAD', 'POST', ])
 def items(request):
     """
     Get all items available for the user
@@ -211,7 +229,7 @@ def items(request):
     if request.user.is_anonymous:
         return JsonResponse({"detail": "Not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
-    if request.method == "GET":
+    if request.method in ("GET", 'HEAD'):
         clients = Client.objects.filter(clientuser__user=request.user)
         items_data = Item.objects.filter(client__in=clients)
 
@@ -220,8 +238,9 @@ def items(request):
         page_size = min(MAX_PAGE_SIZE, int(request.GET.get("page_size", MAX_PAGE_SIZE)))
         page_no = int(request.GET.get("page", "0"))
         items_data = list(items_data[page_no * page_size:page_no * page_size + page_size])
+        fields = request.GET.getlist("fields", [])
+        items_data = [serialize_item(item, fields) for item in items_data]
 
-        items_data = [serialize_item(item) for item in items_data]
         return JsonResponse({"count": items_count, "data": items_data}, status=status.HTTP_200_OK)
 
     if request.method == "POST":

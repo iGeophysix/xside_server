@@ -2,6 +2,7 @@ import json
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms.models import model_to_dict
+from django.http import JsonResponse
 from django.shortcuts import HttpResponse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -31,7 +32,7 @@ def serialize_client(client):
 @api_view(['GET', ])
 def clients(request):
     if request.user.is_anonymous:
-        return HttpResponse(json.dumps({"detail": "Not authorized"}), status=status.HTTP_401_UNAUTHORIZED)
+        return JsonResponse({"detail": "Not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
     if request.method == "GET":
         clients_data = Client.objects.filter(clientuser__user=request.user)
@@ -43,9 +44,9 @@ def clients(request):
         clients_data = list(clients_data[page_no * page_size:page_no * page_size + page_size])
 
         clients_data = [serialize_client(client) for client in clients_data]
-        return HttpResponse(json.dumps({"count": clients_count, "data": clients_data}), status=status.HTTP_200_OK)
+        return JsonResponse({"count": clients_count, "data": clients_data}, status=status.HTTP_200_OK)
 
-    return HttpResponse(json.dumps({"detail": "Wrong method"}), status=status.HTTP_501_NOT_IMPLEMENTED)
+    return JsonResponse({"detail": "Wrong method"}, status=status.HTTP_501_NOT_IMPLEMENTED)
 
 
 @extend_schema(
@@ -59,20 +60,20 @@ def clients(request):
 @api_view(['GET', ])
 def client(request, client_id):
     if request.user.is_anonymous:
-        return HttpResponse(json.dumps({"detail": "Not authorized"}), status=status.HTTP_401_UNAUTHORIZED)
+        return JsonResponse({"detail": "Not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
     # check if user can access this client
     try:
         ClientUser.objects.get(client__id=client_id, user=request.user)
     except ObjectDoesNotExist:
-        return HttpResponse(json.dumps({"detail": "Not found"}), status=status.HTTP_404_NOT_FOUND)
+        return JsonResponse({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
 
     try:
         client = Client.objects.get(pk=client_id)
     except ObjectDoesNotExist:
-        return HttpResponse(json.dumps({"detail": "Not found"}), status=status.HTTP_404_NOT_FOUND)
+        return JsonResponse({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == "GET":
-        return HttpResponse(json.dumps({"data": serialize_client(client)}), status=status.HTTP_200_OK)
+        return JsonResponse({"data": serialize_client(client)}, status=status.HTTP_200_OK)
 
-    return HttpResponse(json.dumps({"detail": "Wrong method"}), status=status.HTTP_501_NOT_IMPLEMENTED)
+    return JsonResponse({"detail": "Wrong method"}, status=status.HTTP_501_NOT_IMPLEMENTED)

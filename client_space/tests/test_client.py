@@ -78,8 +78,8 @@ class ClientTests(TestCase):
     def test_get_one_client_forbidden(self):
         """Check user is not allowed to get non-linked client"""
         token = self.get_token()
-        client_id = Client.objects.get(name='Client1').pk
-        res = self.client.get(reverse('client_space:client', kwargs={'client_id': client_id - 1}),
+        client_id = Client.objects.get(name='Client2').pk
+        res = self.client.get(reverse('client_space:client', kwargs={'client_id': client_id}),
                               content_type='application/json',
                               HTTP_AUTHORIZATION=f'Bearer {token}'
                               )

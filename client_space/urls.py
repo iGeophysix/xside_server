@@ -20,6 +20,8 @@ from . import views
 from .api_views import client, item
 from .api_views.auth import EmailTokenObtainPairView
 
+app_name = 'client_space'
+
 urlpatterns = [
     path('', views.index, name='index'),
     # auth
@@ -27,10 +29,10 @@ urlpatterns = [
     path('refresh/', TokenRefreshView.as_view(), name="token_obtain_pair"),
 
     # client
-    path('client/', client.clients),
-    path('client/<int:client_id>', client.client),
+    path('client/', client.clients, name='client'),
+    path('client/<int:client_id>', client.client, name='client'),
 
     # item
-    path('item/', item.items),
-    path('item/<int:item_id>', item.item),
+    path('item/', item.items, name='item'),
+    path('item/<int:item_id>', item.item, name='item'),
 ]

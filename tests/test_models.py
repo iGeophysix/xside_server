@@ -40,36 +40,3 @@ class ClientTest(TestCase):
                                HTTP_AUTHORIZATION=f'Bearer WRONG TOKEN'
                                )
         self.assertEquals(res.status_code, 401)
-
-    def test_add_client_ok(self):
-        token = self.get_token()
-        res = self.client.post('/api/client/',
-                               data=json.dumps({
-                                   'name': "TestClient",
-                               }),
-                               content_type='application/json',
-                               HTTP_AUTHORIZATION=f'Bearer {token}'
-                               )
-        self.assertEquals(res.status_code, 201)
-        result = json.loads(res.content)["data"]
-        self.assertEquals(result["name"], 'TestClient')
-
-    def test_add_client_not_duplicate(self):
-        token = self.get_token()
-        res = self.client.post('/api/client/',
-                               data=json.dumps({
-                                   'name': "TestClient",
-                               }),
-                               content_type='application/json',
-                               HTTP_AUTHORIZATION=f'Bearer {token}'
-                               )
-        self.assertEquals(res.status_code, 201)
-
-        res = self.client.post('/api/client/',
-                               data=json.dumps({
-                                   'name': "TestClient",
-                               }),
-                               content_type='application/json',
-                               HTTP_AUTHORIZATION=f'Bearer {token}'
-                               )
-        self.assertEquals(res.status_code, 400, 'Duplicate names in Clients should not be allowed')

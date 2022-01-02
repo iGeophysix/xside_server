@@ -434,7 +434,7 @@ def item(request, item_id):
 
     if request.method == "DELETE":
         item.delete()
-        return JsonResponse({"detail": "deleted"}, status=status.HTTP_410_GONE)
+        return JsonResponse({"detail": "deleted"}, status=status.HTTP_200_OK)
 
     return JsonResponse({"detail": "Wrong method"}, status=status.HTTP_501_NOT_IMPLEMENTED)
 
@@ -490,7 +490,7 @@ def parse_request_body(request):
         errors.append({"name": "This field is required"})
 
     images = request.FILES.getlist("image", None)
-    if images is None:
+    if not images:
         errors.append({"image": "This field is required"})
 
     areas = request.data.get("areas", "")
@@ -500,7 +500,7 @@ def parse_request_body(request):
         areas = GEOSGeometry(areas)
         if areas.geom_type != 'MultiPolygon':
             raise GDALException(f'Expected MultiPolygon, got {areas.geom_type}')
-    except GDALException:
+    except (GDALException, ValueError):
         errors.append({"areas": "Incorrect format of the field. Expected MultiPolygon in GeoJSON format."})
 
     is_active = str(request.data.get("is_active", Item._meta.get_field('is_active').get_default()))
@@ -515,12 +515,19 @@ def parse_request_body(request):
     max_rate = request.data.get("max_rate", Item._meta.get_field('max_rate').get_default())
     try:
         max_rate = round(decimal.Decimal(max_rate), Item._meta.get_field('max_daily_spend').decimal_places)
+        if max_rate <= 0:
+            errors.append({'max_rate': 'Max_rate cannot be negative or zero. Expected positive number'})
     except Exception:
         errors.append({'max_rate': 'Cannot parse max_rate. Expected decimal number'})
 
     max_daily_spend = request.data.get("max_daily_spend", Item._meta.get_field('max_daily_spend').get_default())
+
     try:
         max_daily_spend = round(decimal.Decimal(max_daily_spend), Item._meta.get_field('max_daily_spend').decimal_places)
+
+        if max_daily_spend <= 0:
+            errors.append({'max_daily_spend': 'Max_daily_spend cannot be negative or zero. Expected positive number'})
+
     except Exception:
         errors.append({'max_daily_spend': 'Cannot parse max_daily_spend. Expected decimal number'})
 

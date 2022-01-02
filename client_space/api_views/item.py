@@ -38,6 +38,7 @@ def serialize_item(item, fields=None):
 
 
 @extend_schema(
+    operation_id='Get all items',
     description='Get all available items',
     parameters=[
         OpenApiParameter("fields", OpenApiTypes.OBJECT, description="list of fields",
@@ -170,6 +171,7 @@ def serialize_item(item, fields=None):
     ],
 )
 @extend_schema(
+    operation_id='Add new item',
     description='Add new item',
     parameters=[
         OpenApiParameter("name", OpenApiTypes.STR, description="Item Name"),
@@ -251,6 +253,7 @@ def items(request):
 
 
 @extend_schema(
+    operation_id='Get item by id',
     description='Get item by id',
     parameters=[],
     methods=["GET", ],
@@ -314,6 +317,7 @@ def items(request):
     ],
 )
 @extend_schema(
+    operation_id='Update item by id',
     description='Update item by id',
     parameters=[
         OpenApiParameter("name", OpenApiTypes.STR, description="Item Name"),
@@ -393,6 +397,7 @@ def items(request):
     ],
 )
 @extend_schema(
+    operation_id='Delete item by id',
     description='Delete item by id',
     parameters=[],
     methods=["DELETE", ],

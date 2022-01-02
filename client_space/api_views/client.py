@@ -19,6 +19,7 @@ def serialize_client(client):
 
 
 @extend_schema(
+    operation_id='Get all clients',
     description='Get all available clients',
     parameters=[
         OpenApiParameter("page_size", OpenApiTypes.INT, description="Page size"),
@@ -50,6 +51,7 @@ def clients(request):
 
 
 @extend_schema(
+    operation_id='Get client by id',
     description='Get one client',
     parameters=[],
     methods=["GET", ],

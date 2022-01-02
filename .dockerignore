@@ -1,4 +1,8 @@
 .git
+pgsql/
+.idea
+media/images/
+venv/
 
 ### Python template
 # Byte-compiled / optimized / DLL files

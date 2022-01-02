@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-!)8gnfpr1rp()3^=z66m+wtm#&an)ofpf6g%=hi*z#@g6=w!g#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', ]
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.80']
 
 # Application definition
 
@@ -194,4 +194,6 @@ CORS_ALLOWED_ORIGINS = [
     FRONTEND_BASE_URL,
 ]
 
-GDAL_LIBRARY_PATH = '/opt/homebrew/Cellar/gdal/3.3.3_1/lib/libgdal.dylib'
+if os.environ.get('GDAL_LIBRARY_PATH'):
+    GDAL_LIBRARY_PATH = os.environ.get('GDAL_LIBRARY_PATH', '/opt/homebrew/Cellar/gdal/3.3.3_1/lib/libgdal.dylib')
+    print(f'GDAL_LIBRARY_PATH = {GDAL_LIBRARY_PATH}')

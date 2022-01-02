@@ -26,7 +26,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     # auth
     path('token/', EmailTokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path('refresh/', TokenRefreshView.as_view(), name="token_obtain_pair"),
+    path('token/refresh/', TokenRefreshView.as_view(), name="token_obtain_pair_refresh"),
 
     # client
     path('client/', client.clients, name='client'),

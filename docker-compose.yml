@@ -8,9 +8,18 @@ services:
       - database.env # configure postgres
     ports:
       - 5432:5432
-#    volumes:
-#      - database-data:/Users/igeophysix/Programming/PycharmProjects/xside_server/pgsql/postgres/ # persist data even if container shuts down
 
+  web:
+    build:
+      context: .
+      dockerfile: server.Dockerfile
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    env_file:
+      - server.env # configure postgres
+    depends_on:
+      - database
 
-volumes:
-  database-data: # named volumes can be managed easier using docker-compose

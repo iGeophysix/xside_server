@@ -422,6 +422,10 @@ def item(request, item_id):
     except ObjectDoesNotExist:
         return JsonResponse({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
 
+    # check user permissions to access this item
+    if not item.client.clientuser_set.filter(user=request.user):
+        return JsonResponse({"detail": "Not authorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
     if request.method == "GET":
         return JsonResponse({"data": serialize_item(item)}, status=status.HTTP_200_OK)
 

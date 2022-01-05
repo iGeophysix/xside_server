@@ -27,6 +27,7 @@ def serialize_item(item, fields=None):
         "name": str(item.name),
         "client": item.client.name,
         "images": list(ItemFile.objects.filter(item=item).values_list("image", flat=1)),
+        "images_url": [i.image.url for i in ItemFile.objects.filter(item=item)],
         "areas": json.loads(item.areas.geojson),
         "max_rate": float(item.max_rate),
         "max_daily_spend": float(item.max_daily_spend)
@@ -115,6 +116,9 @@ def serialize_item(item, fields=None):
                         "max_daily_spend": 110.01,
                         "images": [
                             "path/to/file1.jpg"
+                        ],
+                        "images_url": [
+                            "https://storage.yandexcloud.net/xside/images/path/to/file1.jpg?AWSAccessKeyId=s***********Nv&Signature=zrQSgfWu5f********o%3D&Expires=1641412663"
                         ]
                     },
                     {
@@ -163,6 +167,9 @@ def serialize_item(item, fields=None):
                         "max_daily_spend": 110.01,
                         "images": [
                             "path/to/file2.jpg"
+                        ],
+                        "images_url": [
+                            "https://storage.yandexcloud.net/xside/images/path/to/file2.jpg?AWSAccessKeyId=s***********Nv&Signature=zrQSgfWu5f********o%3D&Expires=1641412663"
                         ]
                     }
                 ]
@@ -204,6 +211,9 @@ def serialize_item(item, fields=None):
                    "client": "Client1",
                    "name": "Item1",
                    "image": "/path/to/image1.jpg",
+                   "images_url": [
+                       "https://storage.yandexcloud.net/xside/images/path/to/image1.jpg?AWSAccessKeyId=s***********Nv&Signature=zrQSgfWu5f********o%3D&Expires=1641412663"
+                   ],
                    "areas": {
                        "type": "MultiPolygon",
                        "coordinates": [[[[37.60200012009591, 55.753318768941305],
@@ -310,6 +320,9 @@ def items(request):
                     "max_daily_spend": 110.01,
                     "images": [
                         "path/to/file1.jpg"
+                    ],
+                    "images_url": [
+                        "https://storage.yandexcloud.net/xside/images/path/to/file1.jpg?AWSAccessKeyId=s***********Nv&Signature=zrQSgfWu5f********o%3D&Expires=1641412663"
                     ]
                 }
             }
@@ -390,7 +403,10 @@ def items(request):
                     "max_daily_spend": 110.01,
                     "images": [
                         "path/to/file1.jpg"
-                    ]
+                    ],
+                    "images_url": [
+                        "https://storage.yandexcloud.net/xside/images/path/to/file1.jpg?AWSAccessKeyId=s***********Nv&Signature=zrQSgfWu5f********o%3D&Expires=1641412663"
+                    ],
                 }
             },
         ),

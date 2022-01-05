@@ -19,7 +19,10 @@ from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from client_space.views import index as client_space_index
+
 urlpatterns = [
+                  path('', client_space_index, ),
                   path('api/', include('client_space.urls', namespace='client_space'), ),
 
                   path('admin/', admin.site.urls),

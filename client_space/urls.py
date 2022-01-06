@@ -35,4 +35,5 @@ urlpatterns = [
     # item
     path('item/', item.items, name='item'),
     path('item/<int:item_id>', item.item, name='item'),
+    path('item/<int:item_id>/image', item.image, name='image'),
 ]

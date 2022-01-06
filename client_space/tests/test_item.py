@@ -15,7 +15,6 @@ test:
 + Full CRUD test: request POST a new Item, PUT with updates, DELETE the Item
 + request POST a new Item, POST the same message - get 401 about duplicated name
 """
-import filecmp
 import json
 import os
 
@@ -25,7 +24,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from client_space.models import Client, ClientUser, Item, ItemFile
+from client_space.models import Client, ClientUser, Item
 
 test_user = {"username": "testuser", "email": "testuser@example.com", "password": "testpassword"}
 
@@ -205,16 +204,13 @@ class ItemTests(TestCase):
         """request creation of a new item with correct parameters
         - get 200, check images are uploaded, check polygons are created"""
         token = self.get_token()
-        path_to_image = os.path.join('client_space', 'tests', 'tested.png')
-        image_file = open(path_to_image, 'rb')
         data = {
             'client': 'Client1',
-            'name': 'Item5',
+            'name': 'Item88',
             'areas': '{"type": "MultiPolygon", "coordinates":[[[[37.60200012009591, 55.753318768941305], [37.60157692828216, 55.750842010116045], [37.60936881881207,55.74906941558997], [37.613412427017465, 55.75213456321547], [37.607292663306005, 55.75327778725062],[37.60314446990378, 55.75346674901331], [37.60200012009591, 55.753318768941305]]]]}',
             'is_active': 'true',
             'max_rate': 12,
             'max_daily_spend': 110.01,
-            'image': [image_file, ],
         }
         resp = self.client.post(
             reverse('client_space:item'),
@@ -222,7 +218,6 @@ class ItemTests(TestCase):
             format='multipart',
             HTTP_AUTHORIZATION=f'Bearer {token}'
         )
-        image_file.close()
 
         self.assertEquals(resp.status_code, 201)
         new_item_id = resp.json()['data']['id']
@@ -234,33 +229,28 @@ class ItemTests(TestCase):
         self.assertEquals(str(item.max_daily_spend), str(data['max_daily_spend']))
         self.assertEquals(json.loads(item.areas.geojson), json.loads(data['areas']))
 
-        images = ItemFile.objects.filter(item=item)
-        self.assertTrue(filecmp.cmp(str(images[0].image.file), path_to_image))
-
         item.delete()
 
     def test_create_item_not_ok(self):
         """request creation of a new item with wrong parameters
         - get 400 for each wrong parameter"""
         token = self.get_token()
-        path_to_image = os.path.join('client_space', 'tests', 'tested.png')
 
         substitutions = [
-            'client',  # not specified client
-            'name',  # not specified client
-            'image',  # not specified client
-            'areas',  # not specified client
-            {'client': 'Client5'},  # non-existing client
-            {'client': 'Client2'},  # not linked client / unauthorized
-            {'name': 'Item1'},  # duplicated item
             {'areas': 'not geojson'},  # duplicated item
             {'is_active': 'asdasd'},  # incorrect value
             {'max_rate': 'ddd'},  # incorrect value
             {'max_rate': '-10'},  # incorrect value
             {'max_daily_spend': '-10'},  # incorrect value
+            'client',  # not specified client
+            'name',  # not specified client
+            'areas',  # not specified client
+            {'client': 'Client5'},  # non-existing client
+            {'client': 'Client2'},  # not linked client / unauthorized
+            {'name': 'Item1'},  # duplicated item
+
         ]
         for substitution in substitutions:
-            image_file = open(path_to_image, 'rb')
             data = {
                 'client': 'Client1',
                 'name': 'Item5',
@@ -268,7 +258,6 @@ class ItemTests(TestCase):
                 'is_active': 'true',
                 'max_rate': 12,
                 'max_daily_spend': 110.01,
-                'image': [image_file, ],
             }
             if type(substitution) == dict:
                 data.update(substitution)
@@ -279,7 +268,6 @@ class ItemTests(TestCase):
                 data=data,
                 HTTP_AUTHORIZATION=f'Bearer {token}'
             )
-            image_file.close()
 
             self.assertEquals(resp.status_code, 400)
 
@@ -291,7 +279,7 @@ class ItemTests(TestCase):
         client = APIClient()
         token = self.get_token()
         path_to_image = os.path.join('client_space', 'tests', 'tested.png')
-        image_file = open(path_to_image, 'rb')
+
         data = {
             'client': 'Client1',
             'name': 'Item8',
@@ -299,17 +287,25 @@ class ItemTests(TestCase):
             'is_active': 'true',
             'max_rate': 12,
             'max_daily_spend': 110.01,
-            'image': [image_file, ],
         }
         resp = client.post(
             reverse('client_space:item'),
             data=data,
             HTTP_AUTHORIZATION=f'Bearer {token}'
         )
-        image_file.close()
 
         self.assertEquals(resp.status_code, 201)
         new_item_id = resp.json()['data']['id']
+        with open(path_to_image, 'rb') as image_file:
+            resp_img = client.put(
+                reverse('client_space:image', kwargs={"item_id": new_item_id}),
+                data={
+                    "image": [image_file, ]
+                },
+                HTTP_AUTHORIZATION=f'Bearer {token}'
+            )
+
+        self.assertEquals(resp_img.status_code, 200)
 
         item = Item.objects.get(pk=new_item_id)
         self.assertEquals(item.name, data['name'])

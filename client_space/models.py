@@ -1,4 +1,5 @@
 import os
+from hashlib import md5
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -78,9 +79,20 @@ class ItemFile(models.Model):
     """Item files"""
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='items')
     image = models.FileField(verbose_name='image', upload_to=client_directory_path, )
+    md5 = models.CharField(verbose_name='image md5', max_length=32, default='')
+
+    class Meta:
+        unique_together = [['item', 'md5'], ]
+        index_together = [['item', 'md5'], ]
 
     def __str__(self):
         return self.image.name
+
+    def get_md5(self):
+        """Get MD5 of the file"""
+        result = md5(self.image.read()).hexdigest()
+        self.image.seek(0)
+        return result
 
 
 @receiver(models.signals.pre_delete, sender=ItemFile)
@@ -88,5 +100,14 @@ def pre_delete_image(sender, instance, *args, **kwargs):
     """ Clean Old Image file """
     try:
         instance.image.delete(save=False)
+    except Exception:
+        pass
+
+
+@receiver(models.signals.pre_save, sender=ItemFile)
+def pre_save_image(sender, instance, *args, **kwargs):
+    """ Clean Old Image file """
+    try:
+        instance.md5 = instance.get_md5()
     except Exception:
         pass

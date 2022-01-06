@@ -18,7 +18,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from . import views
 from .api_views import client, item
-from .api_views.auth import EmailTokenObtainPairView
+from .api_views.auth import EmailTokenObtainPairView, user
 
 app_name = 'client_space'
 
@@ -27,6 +27,7 @@ urlpatterns = [
     # auth
     path('token/', EmailTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path('token/refresh/', TokenRefreshView.as_view(), name="token_obtain_pair_refresh"),
+    path('user/', user, name="user"),
 
     # client
     path('client/', client.clients, name='client'),

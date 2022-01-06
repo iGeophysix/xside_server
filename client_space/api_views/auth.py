@@ -22,5 +22,24 @@ def user(request):
             "email": user.email,
         }
         return JsonResponse({"data": data}, status=status.HTTP_200_OK)
+    if request.method == "POST":
+        first_name = request.POST.get('first_name', None)
+        last_name = request.POST.get('last_name', None)
+        email = request.POST.get('email', None)
+
+        if not (first_name and last_name and email):
+            return JsonResponse({"detail": "All fields are required"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        user.first_name = first_name
+        user.last_name = last_name
+        user.email = email
+        user.save()
+
+        data = {
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+        }
+        return JsonResponse({"data": data}, status=status.HTTP_200_OK)
     else:
         return JsonResponse({"detail": "Wrong method"}, status=status.HTTP_501_NOT_IMPLEMENTED)

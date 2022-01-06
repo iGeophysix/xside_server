@@ -50,3 +50,19 @@ class LoginTest(TestCase):
         self.assertTrue(response['data']['first_name'], USER1['first_name'])
         self.assertTrue(response['data']['last_name'], USER1['last_name'])
         self.assertTrue(response['data']['email'], USER1['email'])
+
+        data = {
+            'first_name': 'Jane',
+            'last_name': "Donowan",
+            "email": "jane@aaa.com"
+        }
+        res = self.client.post(reverse('client_space:user'),
+                              data=data,
+                              content_type='application/json',
+                              HTTP_AUTHORIZATION=f'Bearer {token}'
+                              )
+
+        self.assertEquals(res.status_code, 200)
+        updated_user = User.objects.get(email=data["email"])
+        self.assertEquals(updated_user.first_name, data['first_name'])
+        self.assertEquals(updated_user.last_name, data['last_name'])

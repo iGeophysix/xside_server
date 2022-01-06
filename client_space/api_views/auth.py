@@ -1,4 +1,6 @@
 from django.http import JsonResponse
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, OpenApiExample, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -9,7 +11,26 @@ from client_space.serializers.auth import CustomTokenObtainPairSerializer
 class EmailTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
+@extend_schema(
+    operation_id='Update user info',
+    description='Update user info',
+    parameters=[
+        OpenApiParameter("first_name", OpenApiTypes.STR, description="First Name"),
+        OpenApiParameter("last_name", OpenApiTypes.STR, description="Last Name"),
+        OpenApiParameter("email", OpenApiTypes.STR, description="Email"),
 
+    ],
+    methods=["POST", ],
+    responses={
+        (200, 'application/json'): OpenApiTypes.OBJECT
+    },
+    examples=[
+        OpenApiExample(
+            'Example',
+            value={},
+        ),
+    ],
+)
 @api_view(['GET', 'POST', ])
 def user(request):
     if request.user.is_anonymous:
@@ -23,9 +44,9 @@ def user(request):
         }
         return JsonResponse({"data": data}, status=status.HTTP_200_OK)
     if request.method == "POST":
-        first_name = request.POST.get('first_name', None)
-        last_name = request.POST.get('last_name', None)
-        email = request.POST.get('email', None)
+        first_name = request.data.get('first_name', None)
+        last_name = request.data.get('last_name', None)
+        email = request.data.get('email', None)
 
         if not (first_name and last_name and email):
             return JsonResponse({"detail": "All fields are required"}, status=status.HTTP_401_UNAUTHORIZED)

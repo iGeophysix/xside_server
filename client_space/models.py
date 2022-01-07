@@ -50,7 +50,7 @@ def client_directory_path(instance, filename) -> str:
 class Item(models.Model):
     """Item object contains one campaign input information like client, name, areas etc."""
     client = models.ForeignKey(Client, on_delete=models.RESTRICT)
-    name = models.CharField(max_length=200, unique=True)
+    name = models.CharField(max_length=200)
 
     areas = geomodel.MultiPolygonField(verbose_name='Areas to show')
     is_active = models.BooleanField(verbose_name='Item is active', default=False)

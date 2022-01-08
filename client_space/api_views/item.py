@@ -632,13 +632,13 @@ def image(request, item_id):
     elif request.method == "DELETE":
         path = request.GET.get('image', None)
         if not path:
-            return JsonResponse({"errors": "Image path not specified"}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({"errors": [{"Images": "Image path not specified"}, ]}, status=status.HTTP_400_BAD_REQUEST)
         image = ItemFile.objects.filter(item_id=item_id, image=path)
         if not image:
-            return JsonResponse({"errors": "Image not found"}, status=status.HTTP_404_NOT_FOUND)
+            return JsonResponse({"errors": [{"Images": "Image not found"}, ]}, status=status.HTTP_404_NOT_FOUND)
 
         if ItemFile.objects.filter(item_id=item_id).count() < 2:
-            return JsonResponse({"errors": "Cannot delete last image"}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({"errors": [{"Images": "Cannot delete the last image"}, ]}, status=status.HTTP_400_BAD_REQUEST)
 
         image.delete()
         return JsonResponse({"data": serialize_item(item)}, status=status.HTTP_200_OK)
@@ -667,7 +667,7 @@ def save_item(request, item, success_status):
         item.save()
 
     except IntegrityError as e:
-        return JsonResponse({"errors": [{"Item": str(e).strip().split("\n")[-1]}, ] + errors}, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({"errors": [{"Item": "Item already exists"}, ] + errors}, status=status.HTTP_409_CONFLICT)
     except Exception as e:
         return JsonResponse({"errors": [{"Item": str(e)}, ] + errors}, status=status.HTTP_400_BAD_REQUEST)
 

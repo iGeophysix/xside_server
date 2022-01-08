@@ -269,7 +269,7 @@ class ItemTests(TestCase):
                 HTTP_AUTHORIZATION=f'Bearer {token}'
             )
 
-            self.assertEquals(resp.status_code, 400)
+            self.assertIn(resp.status_code, (400, 409))
 
     def test_full_crud_item_ok(self):
         """ Full CRUD test:

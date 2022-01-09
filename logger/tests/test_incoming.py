@@ -1,5 +1,6 @@
 import json
 
+from dateutil import parser as dateparser
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import GEOSGeometry
 from django.test import TestCase
@@ -117,7 +118,7 @@ test_track = [
                     "event": "S",
                     "item_file": "",
                     "data": "{\"msg\": \"Downloaded 14 images\"}",
-                    "timestamp": "2022-01-08T18:34:36"
+                    "timestamp": "2022-01-08T18:34:36+0300"
                 },
                 "geometry": {
                     "type": "Point",
@@ -138,7 +139,7 @@ test_track = [
                     "event": "SH",
                     "item_file": "img/img1.png",
                     "data": None,
-                    "timestamp": "2022-01-08T18:35:12"
+                    "timestamp": "2022-01-08T18:35:12+0300"
                 },
                 "geometry": {
                     "type": "Point",
@@ -159,7 +160,7 @@ test_track = [
                     "event": "SH",
                     "item_file": "img/img1.png",
                     "data": None,
-                    "timestamp": "2022-01-08T18:35:18"
+                    "timestamp": "2022-01-08T18:35:18+0300"
                 },
                 "geometry": {
                     "type": "Point",
@@ -180,7 +181,7 @@ test_track = [
                     "event": "SH",
                     "item_file": "img/img1.png",
                     "data": None,
-                    "timestamp": "2022-01-08T18:35:23"
+                    "timestamp": "2022-01-08T18:35:23+0300"
                 },
                 "geometry": {
                     "type": "Point",
@@ -201,7 +202,7 @@ test_track = [
                     "event": "SH",
                     "item_file": "img/img2.png",
                     "data": None,
-                    "timestamp": "2022-01-08T18:35:28"
+                    "timestamp": "2022-01-08T18:35:28+0300"
                 },
                 "geometry": {
                     "type": "Point",
@@ -222,7 +223,7 @@ test_track = [
                     "event": "SH",
                     "item_file": "img/img2.png",
                     "data": None,
-                    "timestamp": "2022-01-08T18:35:32"
+                    "timestamp": "2022-01-08T18:35:32+0300"
                 },
                 "geometry": {
                     "type": "Point",
@@ -243,7 +244,7 @@ test_track = [
                     "event": "SH",
                     "item_file": "img/img3.png",
                     "data": None,
-                    "timestamp": "2022-01-08T18:35:36"
+                    "timestamp": "2022-01-08T18:35:36+0300"
                 },
                 "geometry": {
                     "type": "Point",
@@ -264,7 +265,7 @@ test_track = [
                     "event": "SH",
                     "item_file": "img/img3.png",
                     "data": None,
-                    "timestamp": "2022-01-08T18:36:36"
+                    "timestamp": "2022-01-08T18:36:36+0300"
                 },
                 "geometry": {
                     "type": "Point",
@@ -285,7 +286,7 @@ test_track = [
                     "event": "ER",
                     "item_file": "",
                     "data": "{\"msg\": \"Wrong coordinates\"}",
-                    "timestamp": "2022-01-08T18:38:36"
+                    "timestamp": "2022-01-08T18:38:36+0300"
                 },
                 "geometry": {
                     "type": "Point",
@@ -353,5 +354,12 @@ class ClientTests(TestCase):
                                    )
 
             self.assertIn(res.status_code, (200, 201))
-        print(Log.objects.all())
-        print(VideoModule.objects.all())
+
+            log = Log.objects.order_by('pk').last()
+            props = test_log['features'][0]['properties']
+            geom = GEOSGeometry(json.dumps(test_log['features'][0]['geometry']))
+            self.assertEquals(log.event, props['event'])
+            self.assertEquals(log.data, json.loads(props['data']) if props['data'] else None)
+            self.assertEquals(log.item_file, ItemFile.objects.get(image=props['item_file']) if props['item_file'] else None)
+            self.assertEquals(log.timestamp, dateparser.parse(props['timestamp']))
+            self.assertEquals(log.point, geom)

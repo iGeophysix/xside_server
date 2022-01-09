@@ -27,11 +27,17 @@ class Log(models.Model):
         ERROR = 'ER', _('Error')
 
     module = models.ForeignKey(VideoModule, on_delete=models.RESTRICT)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField()
     point = geomodels.PointField(verbose_name="Log geo location", )
     event = models.CharField(max_length=2, choices=Events.choices)
     item_file = models.ForeignKey(ItemFile, verbose_name="Shown Item File", on_delete=models.DO_NOTHING, blank=True, null=True, default=None)
     data = models.JSONField(verbose_name="Other log data", blank=True, null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['module'], name='module_idx'),
+            models.Index(fields=['item_file'], name='item_file_idx'),
+        ]
 
     def __str__(self):
         return f"{self.module.name} @ {self.timestamp}"

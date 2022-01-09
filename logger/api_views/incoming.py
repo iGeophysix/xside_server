@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 
 from client_space.models import ItemFile
-from logger.models import Log
+from logger.models import Log, VideoModule
 
 MAX_PAGE_SIZE = 100
 
@@ -37,7 +37,7 @@ def logs(request):
 def save_log(request, log, success_status):
     try:
         videomodule = request.user.videomodule
-    except User.DoesNotExist:
+    except VideoModule.DoesNotExist:
         return JsonResponse({"detail": "Not videomodule"}, status=status.HTTP_403_FORBIDDEN)
 
     if not "features" in request.data.keys():

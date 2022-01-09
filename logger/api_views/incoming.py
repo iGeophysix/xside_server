@@ -3,8 +3,7 @@ import json
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import GEOSGeometry
 from django.http import JsonResponse
-from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view
 
@@ -18,46 +17,11 @@ class ParsingError(Exception):
     pass
 
 
-@extend_schema(
-    operation_id='Add new log',
-    description='Add new log',
-    parameters=[],
-    methods=["POST", ],
-    responses={
-        (200, 'application/json'): OpenApiTypes.OBJECT
-    },
-    examples=[
-        OpenApiExample(
-            'Example',
-            value={"id": 1,
-                   "client": "Client1",
-                   "name": "Item1",
-                   "image": "/path/to/image1.jpg",
-                   "images_url": [
-                       "https://storage.yandexcloud.net/xside/images/path/to/image1.jpg?AWSAccessKeyId=s***********Nv&Signature=zrQSgfWu5f********o%3D&Expires=1641412663"
-                   ],
-                   "areas": {
-                       "type": "MultiPolygon",
-                       "coordinates": [[[[37.60200012009591, 55.753318768941305],
-                                         [37.60157692828216, 55.750842010116045],
-                                         [37.60936881881207, 55.74906941558997],
-                                         [37.613412427017465, 55.75213456321547],
-                                         [37.607292663306005, 55.75327778725062],
-                                         [37.60314446990378, 55.75346674901331],
-                                         [37.60200012009591, 55.753318768941305]]]]
-                   },
-                   "is_active": False,
-                   "max_rate": 10.0,
-                   "max_daily_spend": 100.0
-                   },
-
-        ),
-    ],
-)
+@extend_schema(exclude=True, )
 @api_view(['POST', ])
 def logs(request):
     """
-    Get all items available for the user
+    POST logs from video modules
     :return:
     """
     if request.user.is_anonymous:
@@ -74,7 +38,7 @@ def save_log(request, log, success_status):
     try:
         videomodule = request.user.videomodule
     except User.DoesNotExist:
-        return JsonResponse({"detail": "Not authorized"}, status=status.HTTP_403_FORBIDDEN)
+        return JsonResponse({"detail": "Not videomodule"}, status=status.HTTP_403_FORBIDDEN)
 
     if not "features" in request.data.keys():
         return JsonResponse({"detail": "Feature collection not found"}, status=status.HTTP_400_BAD_REQUEST)
@@ -97,7 +61,7 @@ def save_log(request, log, success_status):
             log.item_file = ItemFile.objects.get(image=item_file) if item_file else None
             log.data = data
             log.save()
-        except Exception as e:
+        except Exception:
             return JsonResponse({"detail": "Incorrect data"}, status=status.HTTP_400_BAD_REQUEST)
 
     return JsonResponse({"data": "OK"}, status=success_status)

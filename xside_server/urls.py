@@ -26,7 +26,7 @@ urlpatterns = [
                   path('api/', include('client_space.urls', namespace='client_space'), ),
 
                   # private api
-                  path('private/api/', include('logger.urls', namespace='logger'), ),
+                  path('api/', include('logger.urls', namespace='logger'), ),
 
                   path('admin/', admin.site.urls),
 
